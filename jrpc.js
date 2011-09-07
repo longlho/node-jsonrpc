@@ -49,7 +49,7 @@ var JRPCServer = {
     
     handle: function(req, res) {
         var jsonRequest = {};
-        var url = require('url').parse(req.url, true);
+        var url;
         //Only accept GET & POST methods
         if (req.method != 'POST' && req.method != 'GET') {
             error = 'Method can only be GET or POST';
@@ -58,7 +58,22 @@ var JRPCServer = {
                 'Content-Type': 'text/plain'
             });
             res.end(error);
+            return;
         }
+        
+        //Parse the URL
+        try {
+            url = require('url').parse(req.url, true);
+        } catch(e) {
+            error = 'Malformed Request';
+            res.writeHead(400, {
+                'Content-Length': error.length,
+                'Content-Type': 'text/plain'
+            });
+            res.end(error);
+            return;
+        }
+        
         //Allow certain paths to go thru
         if (url.pathname in JRPCServer.customPaths) {
             JRPCServer.customPaths[url](url, res);
