@@ -3,8 +3,8 @@ function extend(a, b) {
         a[method] = b[method];
     }
 }
-
 var JRPCServer = {
+    
     customPaths: { //Allow custom handlers for certain paths
         '/version': function(url, res) {
             JRPCServer.output('0.1.0', res);
@@ -18,11 +18,11 @@ var JRPCServer = {
         'Invalid Params': -32602,
         'Internal Error': -32603
     },
-
-    _modules : {},
-
-    registerModule : function(module) {
-	JRPCServer._modules[module.name] = module();	
+    
+    _modules: {},
+    
+    registerModule: function(module) {
+        JRPCServer._modules[module.name] = module();
     },
     
     generateError: function(reqId, errorName, errorMessage, errorData) {
@@ -43,23 +43,21 @@ var JRPCServer = {
     
     output: function(jsonResponse, res) {
         res.writeHead(200, {
-            'Content-Type' : 'application/json',
-            'Transfer-Enconding' : 'chunked'
+            'Content-Type': 'application/json',
+            'Transfer-Enconding': 'chunked'
         });
         res.end(JSON.stringify(jsonResponse));
     },
     
     dispatch: function(jsonRequest) {
-	if (!jsonRequest.hasOwnProperty('id')) {
-	    return JRPCServer.generateError(null, 'Invalid Request', 'ID must be specified');
-	}
-
-	var reqId = jsonRequest.id;	
-	if (!jsonRequest.hasOwnProperty('method')) {
-	    return JRPCServer.generateError(reqId, 'Invalid Request', 'Method must be specified');
-	} 
-	
-	return {};
+        if (!jsonRequest.hasOwnProperty('id')) {
+            return JRPCServer.generateError(null, 'Invalid Request', 'ID must be specified');
+        }
+        var reqId = jsonRequest.id;
+        if (!jsonRequest.hasOwnProperty('method')) {
+            return JRPCServer.generateError(reqId, 'Invalid Request', 'Method must be specified');
+        }
+        return {};
     },
     
     handle: function(req, res) {
@@ -75,11 +73,11 @@ var JRPCServer = {
             res.end(error);
             return;
         }
-        
         //Parse the URL
         try {
             url = require('url').parse(req.url, true);
-        } catch(e) {
+        }
+        catch (e) {
             error = 'Malformed Request';
             res.writeHead(400, {
                 'Content-Length': error.length,
@@ -88,38 +86,34 @@ var JRPCServer = {
             res.end(error);
             return;
         }
-        
         //Allow certain paths to go thru
         if (url.pathname in JRPCServer.customPaths) {
             JRPCServer.customPaths[url.pathname](url, res);
             res.end();
-	    return;
+            return;
         }
         if (req.method == 'POST') {
             jsonString = "";
             req.on('data', function(chunk) {
                 jsonString += chunk;
             });
-	    req.on('end', function() {
-            try {
-                jsonRequest = JSON.parse(jsonString);
-            }
-            catch (err) {
-                JRPCServer.output(JRPCServer.generateError(null, "Parse Error", err + ". Cannot parse message body: " + jsonString), res);
-		return;
-            }
-		response = JRPCServer.dispatch(jsonRequest);
-		JRPCServer.output(response, res);
-	    });
+            req.on('end', function() {
+                try {
+                    jsonRequest = JSON.parse(jsonString);
+                }
+                catch (err) {
+                    JRPCServer.output(JRPCServer.generateError(null, "Parse Error", err + ". Cannot parse message body: " + jsonString), res);
+                    return;
+                }
+                response = JRPCServer.dispatch(jsonRequest);
+                JRPCServer.output(response, res);
+            });
         }
         else if (req.method == 'GET') { //Allow GET method with param json=<json_string>
             jsonRequest = url.query.json;
-		response = JRPCServer.dispatch(jsonRequest);
-		JRPCServer.output(response, res);
-
-
+            response = JRPCServer.dispatch(jsonRequest);
+            JRPCServer.output(response, res);
         }
     }
-    
 };
 extend(exports, JRPCServer);
