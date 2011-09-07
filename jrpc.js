@@ -11,16 +11,22 @@ var JRPCServer = {
         }
     },
     
-    errors: {
+    _errors: {
         'Parse Error': -32700,
         'Invalid Request': -32600,
         'Method Not Found': -32601,
         'Invalid Params': -32602,
         'Internal Error': -32603
     },
+
+    _modules : {},
+
+    registerModule : function(module) {
+	JRPCServer._modules[module.name] = module();	
+    },
     
-    newErrorResponse: function(reqId, errorName, errorMessage, errorData) {
-        var errors = JRPCServer.errors;
+    generateError: function(reqId, errorName, errorMessage, errorData) {
+        var errors = JRPCServer._errors;
         if (!(errorName in errors)) {
             errorName = 'Internal Error';
         }
@@ -40,16 +46,25 @@ var JRPCServer = {
             'Content-Type' : 'application/json',
             'Transfer-Enconding' : 'chunked'
         });
-        res.end(jsonResponse);
+        res.end(JSON.stringify(jsonResponse));
     },
     
-    dispatch: function(jsonRequest, res) {
-        JRPCServer.output(jsonRequest, res);
+    dispatch: function(jsonRequest) {
+	if (!jsonRequest.hasOwnProperty('id')) {
+	    return JRPCServer.generateError(null, 'Invalid Request', 'ID must be specified');
+	}
+
+	var reqId = jsonRequest.id;	
+	if (!jsonRequest.hasOwnProperty('method')) {
+	    return JRPCServer.generateError(reqId, 'Invalid Request', 'Method must be specified');
+	} 
+	
+	return {};
     },
     
     handle: function(req, res) {
         var jsonRequest = {};
-        var url;
+        var url, response;
         //Only accept GET & POST methods
         if (req.method != 'POST' && req.method != 'GET') {
             error = 'Method can only be GET or POST';
@@ -84,17 +99,25 @@ var JRPCServer = {
             req.on('data', function(chunk) {
                 jsonString += chunk;
             });
+	    req.on('end', function() {
             try {
                 jsonRequest = JSON.parse(jsonString);
             }
             catch (err) {
-                JRPCServer.output(JRPCServer.newErrorResponse(null, "Parse Error", "Cannot parse message body: " + jsonString));
+                JRPCServer.output(JRPCServer.generateError(null, "Parse Error", err + ". Cannot parse message body: " + jsonString), res);
+		return;
             }
+		response = JRPCServer.dispatch(jsonRequest);
+		JRPCServer.output(response, res);
+	    });
         }
         else if (req.method == 'GET') { //Allow GET method with param json=<json_string>
             jsonRequest = url.query.json;
+		response = JRPCServer.dispatch(jsonRequest);
+		JRPCServer.output(response, res);
+
+
         }
-        JRPCServer.dispatch(jsonRequest, res);
     }
     
 };
