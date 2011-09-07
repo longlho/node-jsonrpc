@@ -6,8 +6,8 @@ function extend(a, b) {
 
 var JRPCServer = {
     customPaths: { //Allow custom handlers for certain paths
-        'version': function() {
-            return '0.1.0';
+        '/version': function(url, res) {
+            JRPCServer.output('0.1.0', res);
         }
     },
     
@@ -91,8 +91,9 @@ var JRPCServer = {
         
         //Allow certain paths to go thru
         if (url.pathname in JRPCServer.customPaths) {
-            JRPCServer.customPaths[url](url, res);
+            JRPCServer.customPaths[url.pathname](url, res);
             res.end();
+	    return;
         }
         if (req.method == 'POST') {
             jsonString = "";
