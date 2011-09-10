@@ -8,7 +8,10 @@ var JRPCServer = {
     customPaths: { //Allow custom handlers for certain paths
         '/version': function(url, res) {
             JRPCServer.output('0.1.0', res);
-        }
+        },
+	'/modules': function(url, res) {
+	    JRPCServer.output(JRPCServer._modules, res);
+	}
     },
     
     _errors: {
@@ -22,7 +25,7 @@ var JRPCServer = {
     _modules: {},
     
     registerModule: function(module) {
-        JRPCServer._modules[module.name] = module();
+        JRPCServer._modules[module.name] = module;
     },
     
     generateError: function(reqId, errorName, errorMessage, errorData) {
@@ -50,6 +53,9 @@ var JRPCServer = {
     },
     
     dispatch: function(jsonRequest) {
+	if (!jsonRequest) {
+	    return JRPCServer.generateError(null, 'Invalid Request', 'No request found');
+	}
         if (!jsonRequest.hasOwnProperty('id')) {
             return JRPCServer.generateError(null, 'Invalid Request', 'ID must be specified');
         }
@@ -57,7 +63,13 @@ var JRPCServer = {
         if (!jsonRequest.hasOwnProperty('method')) {
             return JRPCServer.generateError(reqId, 'Invalid Request', 'Method must be specified');
         }
-        return {};
+	var methodArr = jsonRequest.method.split('\.');
+	var handler = JRPCServer._modules[methodArr[0]];
+	if (Array.isArray(jsonRequest.params)) {
+	   return handler[methodArr[1]].apply(handler, jsonRequest.params);
+	}
+        else 
+	   return {};
     },
     
     handle: function(req, res) {
