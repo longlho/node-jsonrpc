@@ -95,7 +95,7 @@ var JRPCServer = {
         
         //Only accept GET & POST methods
         if (req.method != 'POST' && req.method != 'GET') {
-            _handleInvalidRequest(400, 'Method can only be GET or POST', res);
+            JRPCServer._handleInvalidRequest(400, 'Method can only be GET or POST', res);
             return;
         }
         
@@ -104,7 +104,7 @@ var JRPCServer = {
             url = require('url').parse(req.url, true);
         }
         catch (e) {
-            _handleInvalidRequest(400, 'Malformed Request', res);
+            _JRPCServer._handleInvalidRequest(400, 'Malformed Request', res);
             return;
         }
         
@@ -114,7 +114,7 @@ var JRPCServer = {
                 JRPCServer.customPaths[url.pathname](url, res);
                 res.end();
             } catch (er) {
-                _handleInvalidRequest(400, 'Error resolving path' + url.pathname, res);
+                JRPCServer._handleInvalidRequest(400, 'Error resolving path' + url.pathname, res);
             }
             return;
         }
@@ -126,6 +126,10 @@ var JRPCServer = {
                 jsonString += chunk;
             });
             req.on('end', function() {
+		if (!jsonString.length) {
+		    JRPCServer._handleInvalidRequest(400, 'Body should not be empty in the request', res);
+		    return;
+		}
                 try {
                     jsonRequest = JSON.parse(jsonString);
                 }
