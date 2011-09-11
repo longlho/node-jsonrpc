@@ -9,3 +9,12 @@ This is a JSON-RPC protocol implementation in NodeJS that follows JSON-RPC 2.0 s
 - Introspection (in progress)
 - Authentication (in progress)
 
+## Usage
+	var echoHandler = require('./handler');
+	var jrpcServer = require('./jrpc');
+	var http = require('http');
+	
+	jrpcServer.registerModule(echoHandler.init());
+	http.createServer(function(req, res) {
+		jrpcServer.handle(req, res);	
+	}).listen(8080);
