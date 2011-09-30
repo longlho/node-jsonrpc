@@ -46,15 +46,19 @@ var JRPCServer = {
 	var methodArr = jsonRequest.method.split('\.');
 	var handler = JRPCServer._modules[methodArr[0]];
 	if (!handler || !handler.hasOwnProperty(methodArr[1])) {
-	    return JRPCServer._generateError(reqId, 'Method Not Found', jsonRequest.method);
+	    return JRPCServer._generateError(reqId, 'Method Not Found', handler + " has but doesn't have " + jsonRequest.method);
 	}
 	var response;
 	try {
-	    if (Array.isArray(jsonRequest.params)) {
-		response = handler[methodArr[1]].apply(handler, jsonRequest.params);
-	    } else {
-		console.log(handler[methodArr[1]]);    
+	    var parameters = jsonRequest.params;
+	    if (!Array.isArray(parameters)) {
+		parameters = [];
+		var paramList = handler[methodArr[1]].toString().match(/\(.*?\)/)[0].match(/[\w]+/g);
+		for (var i = 0; i < paramList.length; i++) {
+		    parameters.push(jsonRequest.params[paramList[i]]);
+		}
 	    } 
+	    response = handler[methodArr[1]].apply(handler, parameters);
 	} catch (e) { 
 	    return JRPCServer._generateError(reqId, 'Internal Error', e);
 	}
@@ -146,7 +150,8 @@ var JRPCServer = {
         }
         else if (req.method == 'GET') { //Allow GET method with params following JSON-RPC spec
             jsonRequest = url.query;
-	    console.log(url.query);
+	    jsonRequest.params = JSON.parse(jsonRequest.params);
+	    //console.log(url.query);
             response = JRPCServer._dispatch(jsonRequest);
             JRPCServer.output(response, res);
         }
