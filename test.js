@@ -49,12 +49,19 @@ var checkOKResponse = function(res) {
     
 var tests = {
 	done : 0,
+	finish : function (num) {
+	    tests.done += num;
+	    var allDone = (1 << (Object.keys(tests).length - 2)) - 1;
+	    if (tests.done == allDone) {
+		server.close();
+	    }
+	},
 	testEmptyBody : function() {
 	    http.request(options, function(res) {
 	        console.log('Test empty body POST request');
 	        callbackFired = true;
 	        checkBadResponse(res);
-		tests.done += 1;
+		tests.finish(1);
 	    }).end();
 	},
 
@@ -67,7 +74,7 @@ var tests = {
 		checkResponseCompliant(reqId, res, function(json){
 		    assert.ok(json.hasOwnProperty('error'), "Should be error");
 		    assert.ok(json.error.message.indexOf("Method Not Found") > -1, "Error message should be Method Not Found, but was " + JSON.stringify(json.error));	
-		    tests.done += 2
+		    tests.finish(2);
 		});
             }).end();
 	}
@@ -75,11 +82,8 @@ var tests = {
 
 server.listen(3000, 'localhost', function() {
 	for (var k in tests) {
-		if (k !== 'done')
+		if (k !== 'done' && k !== 'finish')
 		    tests[k]();
 	}
    });
-var testLength = Object.keys(tests).length
-var allDone = testLength > 2 ? (1 << (testLength - 1)) - 1 : 1
-console.log(allDone);
-console.log(testLength);
+

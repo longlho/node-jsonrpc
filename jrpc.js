@@ -49,13 +49,16 @@ var JRPCServer = {
 	    return JRPCServer._generateError(reqId, 'Method Not Found', jsonRequest.method);
 	}
 	var response;
-	if (Array.isArray(jsonRequest.params)) {
-	    try {
+	try {
+	    if (Array.isArray(jsonRequest.params)) {
 		response = handler[methodArr[1]].apply(handler, jsonRequest.params);
-	    } catch (e) {
-		return JRPCServer._generateError(reqId, 'Internal Error', e);
-	    }
+	    } else {
+		console.log(handler[methodArr[1]]);    
+	    } 
+	} catch (e) { 
+	    return JRPCServer._generateError(reqId, 'Internal Error', e);
 	}
+	
 	return {
 	   jsonrpc : '2.0',
 	   result : response,
