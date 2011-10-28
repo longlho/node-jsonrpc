@@ -32,7 +32,7 @@ var JRPCServer = (function () {
 				handler = _modules[methodArr[0]];
 					
 			if (!handler || !handler.hasOwnProperty(methodArr[1]))
-			    return _generateError(reqId, 'Method Not Found', handler + " has but doesn't have " + jsonRequest.method);
+			    return _generateError(reqId, 'Method Not Found', handler + " doesn't have " + jsonRequest.method);
 				
 			var 	response,
 				parameters = jsonRequest.params;
