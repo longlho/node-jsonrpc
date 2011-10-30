@@ -1,6 +1,6 @@
 {
   	"author": "Long Ho <holevietlong@gmail.com> (www.azndezign.com)",
-  	"name": "jsonrpc",
+  	"name": "njrpc",
   	"description": "JSON-RPC v2.0 implementation in NodeJS",
   	"version": "0.1.0",
   	"repository": {
