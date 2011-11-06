@@ -1,3 +1,4 @@
+var URL = require('url');
 var JRPCServer = (function() {
     var _errors = {
         'Parse Error': -32700,
@@ -19,7 +20,17 @@ var JRPCServer = (function() {
                 id: reqId
             };
         },
-        _dispatch = function(jsonRequest) {
+        _dispatch = function (jsonRequest) {
+        	if (Array.isArray(jsonRequest)) {
+        		var result = [];
+        		for (var i = 0; i < jsonRequest.length; i++) {
+        			result.push(_dispatchSingle(jsonRequest[i]));
+        		}
+        		return result;
+        	}
+        	return _dispatchSingle(jsonRequest);
+        },
+        _dispatchSingle = function (jsonRequest) {
             if (!jsonRequest) return _generateError(null, 'Invalid Request', 'No request found');
             if (!jsonRequest.id) return _generateError(null, 'Invalid Request', 'ID must be specified');
             if (!jsonRequest.method) return _generateError(jsonRequest.id, 'Invalid Request', 'Method must be specified');
@@ -27,11 +38,13 @@ var JRPCServer = (function() {
                 methodArr = jsonRequest.method.split('\.'),
                 handler = _modules[methodArr[0]];
             if (!handler || !handler.hasOwnProperty(methodArr[1])) return _generateError(reqId, 'Method Not Found', handler + " doesn't have " + jsonRequest.method);
-            var response, parameters = jsonRequest.params;
+            var response, 
+            	parameters = jsonRequest.params;
             try {
                 if (!Array.isArray(parameters)) {
                     parameters = [];
-                    var i, paramList = handler[methodArr[1]].toString().match(/\(.*?\)/)[0].match(/[\w]+/g);
+                    var i, 
+                    	paramList = handler[methodArr[1]].toString().match(/\(.*?\)/)[0].match(/[\w]+/g);
                     for (i = 0; i < paramList.length; i++) {
                         parameters.push(jsonRequest.params[paramList[i]]);
                     }
@@ -54,30 +67,34 @@ var JRPCServer = (function() {
             });
             res.end(message);
         };
+        
+        
     return {
         registerModule: function(module) {
             _modules[module.name] = module;
         },
         customPaths: { //Allow custom handlers for certain paths
             '/version': function(url, res) {
-                JRPCServer.output('0.1.0', res);
+                return JRPCServer.output('0.1.0', res);
             }
         },
         output: function(jsonResponse, res) {
+        	var result = JSON.stringify(jsonResponse);
             res.writeHead(200, {
                 'Content-Type': 'application/json',
-                'Transfer-Enconding': 'chunked'
+                'Content-Length': result.length
             });
-            res.end(JSON.stringify(jsonResponse));
+            res.end(result);
         },
+        
         handle: function(req, res) {
-            var jsonRequest = {},
-                url;
             //Only accept GET & POST methods
             if (req.method != 'POST' && req.method != 'GET') return _handleInvalidRequest(400, 'Method can only be GET or POST', res);
+            
+            var url;
             //Parse the URL
             try {
-                url = require('url').parse(req.url, true);
+                url = URL.parse(req.url, true);
             }
             catch (e) {
                 return _handleInvalidRequest(400, 'Malformed Request', res);
@@ -85,19 +102,17 @@ var JRPCServer = (function() {
             //Allow certain paths to go thru
             if (url.pathname in JRPCServer.customPaths) {
                 try {
-                    JRPCServer.customPaths[url.pathname](url, res);
+                    return JRPCServer.customPaths[url.pathname](url, res);
                 }
                 catch (er) {
-                    _handleInvalidRequest(400, 'Error resolving path' + url.pathname, res);
+                    return _handleInvalidRequest(400, 'Error resolving path' + url.pathname, res);
                 }
-                return;
             }
+            
             if (req.method == 'POST') {
                 //Grab POST request
-                jsonString = "";
-                req.on('data', function(chunk) {
-                    jsonString += chunk;
-                });
+                var jsonString = '';
+                req.on('data', function(chunk) { jsonString += chunk; });
                 req.on('end', function() {
                     if (!jsonString.length) return _handleInvalidRequest(400, 'Body should not be empty in the request', res);
                     try {
@@ -106,13 +121,13 @@ var JRPCServer = (function() {
                     catch (err) {
                         return JRPCServer.output(_generateError(null, "Parse Error", err + ". Cannot parse message body: " + jsonString), res);
                     }
-                    JRPCServer.output(_dispatch(jsonRequest), res);
+                    return JRPCServer.output(_dispatch(jsonRequest), res);
                 });
             }
             else if (req.method == 'GET') { //Allow GET method with params following JSON-RPC spec
-                jsonRequest = url.query;
+                var jsonRequest = url.query;
                 jsonRequest.params = JSON.parse(jsonRequest.params);
-                JRPCServer.output(_dispatch(jsonRequest), res);
+                return JRPCServer.output(_dispatch(jsonRequest), res);
             }
         }
     };
