@@ -21,6 +21,7 @@ Registers a module, which should have `name` as the namespace of the module.
 ### njrpc.addCustomPath(url, handlerFn)
 Add `handlerFn` to custom path, for example '/version' can return version number as plain text instead of json request.
 `handlerFn` will have 2 arguments:
+
 - `req`: Request object
 - `res`: Response object to write to
 
