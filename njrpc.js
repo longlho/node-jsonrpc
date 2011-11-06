@@ -1,6 +1,6 @@
 /**
  * Some notes: 
- * - preHandleDelegate is a request interceptor that can inject extra "hidden" params into
+ * - preHandle is a request interceptor that can inject extra "hidden" params into
  * request object (for authentication and things of that purpose). It can also reject the request
  * by throwing exception, which will be returned to sender.
  */
@@ -15,6 +15,12 @@ var JRPCServer = (function() {
         'Internal Error': -32603
     },
         _modules = {},
+        _preHandle = null,
+        _customPaths = { 
+            '/version': function(req, res) {
+                return JRPCServer.output(res, '1.0.0');
+            }
+        },
         _generateError = function(reqId, errorName, errorMessage, errorData) {
             if (!(errorName in _errors)) errorName = 'Internal Error';
             return {
@@ -49,7 +55,7 @@ var JRPCServer = (function() {
             
             try {
             	// Invoke delegation to prehandle request object
-            	if (JRPCServer.preHandleDelegate) JRPCServer.preHandleDelegate(jReq);
+            	if (_preHandle) _preHandle(jReq);
             	
             	var parameters = jReq.params;
             	
@@ -84,21 +90,19 @@ var JRPCServer = (function() {
         registerModule: function(module) {
             _modules[module.name] = module;
         },
-        customPaths: { //Allow custom handlers for certain paths
-            '/version': function(url, res) {
-                return JRPCServer.output('1.0.0', res);
-            }
+        addCustomPath : function (url, handlerFn) { //Allow custom handlers for certain paths
+        	_customPaths[url] = handleFn;
         },
-        output: function(jsonResponse, res) {
-        	var result = JSON.stringify(jsonResponse);
+        output: function(res, jsonResponse) {
+        	var result = typeof jsonResponse == 'string' ? jsonResponse : JSON.stringify(jsonResponse);
             res.writeHead(200, {
                 'Content-Type': 'application/json',
                 'Content-Length': result.length
             });
             res.end(result);
         },
-        preHandleDelegate: function (singleReq) {},
-        handle: function(req, res) {
+        handle: function(req, res, preHandleFn) {
+        	if (typeof preHandleFn == 'function') _preHandle = preHandleFn
             //Only accept GET & POST methods
             if (req.method != 'POST' && req.method != 'GET') return _handleInvalidRequest(400, 'Method can only be GET or POST', res);
             
@@ -111,9 +115,9 @@ var JRPCServer = (function() {
                 return _handleInvalidRequest(400, 'Malformed Request', res);
             }
             //Allow certain paths to go thru
-            if (url.pathname in JRPCServer.customPaths) {
+            if (url.pathname in _customPaths) {
                 try {
-                    return JRPCServer.customPaths[url.pathname](url, res);
+                    return _customPaths[url.pathname](req, res);
                 }
                 catch (er) {
                     return _handleInvalidRequest(400, 'Error resolving path' + url.pathname, res);
@@ -130,15 +134,15 @@ var JRPCServer = (function() {
                         var jsonRequest = JSON.parse(jsonString);
                     }
                     catch (err) {
-                        return JRPCServer.output(_generateError(null, "Parse Error", err + ". Cannot parse message body: " + jsonString), res);
+                        return JRPCServer.output(res, _generateError(null, "Parse Error", err + ". Cannot parse message body: " + jsonString));
                     }
-                    return JRPCServer.output(_dispatch(jsonRequest), res);
+                    return JRPCServer.output(res, _dispatch(jsonRequest));
                 });
             }
             else if (req.method == 'GET') { //Allow GET method with params following JSON-RPC spec
                 var jsonRequest = url.query;
                 jsonRequest.params = JSON.parse(jsonRequest.params);
-                return JRPCServer.output(_dispatch(jsonRequest), res);
+                return JRPCServer.output(res, _dispatch(jsonRequest));
             }
         }
     };

@@ -6,13 +6,31 @@ This is a JSON-RPC protocol implementation in NodeJS that follows JSON-RPC 2.0 s
 - Better error feedbacks
 - Allow method namespacing (Module.method)
 - Allow exposure of all methods inside a module
+- Authentication can be achieved with giving a preHandle function
 - Introspection (in progress)
-- Authentication (in progress)
+
 
 ## Usage
 Handler that can be registered with njrpc should have name attribute in the instance. A sample handler can be found in handler.js
 
 The best design pattern to use with this server is the Module design pattern.
+
+### njrpc.registerModule(module)
+Registers a module, which should have `name` as the namespace of the module.
+
+### njrpc.addCustomPath(url, handlerFn)
+Add `handlerFn` to custom path, for example '/version' can return version number as plain text instead of json request.
+`handlerFn` will have 2 arguments:
+- `req`: Request object
+- `res`: Response object to write to
+
+### njrpc.output(res, [jsonResponse])
+Actually write the json response out to the pipe. This can also be overridden to write something else.
+
+### njrpc.handle(req, res, [preHandleFn])
+Handles request & response, JSON-RPC style. `preHandleFn` is used to manipulate json request before it got pushed down to Handler level. `preHandleFn` takes a single json request object as the argument (after parsing and whitelisting)
+
+## Examples
 
 ### Simple EchoHandler that echo whatever it receives
 
