@@ -116,7 +116,7 @@ var JRPCServer = (function() {
                 req.on('end', function() {
                     if (!jsonString.length) return _handleInvalidRequest(400, 'Body should not be empty in the request', res);
                     try {
-                        jsonRequest = JSON.parse(jsonString);
+                        var jsonRequest = JSON.parse(jsonString);
                     }
                     catch (err) {
                         return JRPCServer.output(_generateError(null, "Parse Error", err + ". Cannot parse message body: " + jsonString), res);

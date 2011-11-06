@@ -1,1 +1,3 @@
 .nide
+node_modules
+*.log
