@@ -1,3 +1,10 @@
+/**
+ * Some notes: 
+ * - preHandleDelegate is a request interceptor that can inject extra "hidden" params into
+ * request object (for authentication and things of that purpose). It can also reject the request
+ * by throwing exception, which will be returned to sender.
+ */
+
 var URL = require('url');
 var JRPCServer = (function() {
     var _errors = {
@@ -21,7 +28,7 @@ var JRPCServer = (function() {
             };
         },
         _dispatch = function (jsonRequest) {
-        	if (Array.isArray(jsonRequest)) {
+        	if (Array.isArray(jsonRequest)) { // handles batching calls
         		var result = [];
         		for (var i = 0; i < jsonRequest.length; i++) {
         			result.push(_dispatchSingle(jsonRequest[i]));
@@ -30,35 +37,39 @@ var JRPCServer = (function() {
         	}
         	return _dispatchSingle(jsonRequest);
         },
-        _dispatchSingle = function (jsonRequest) {
-            if (!jsonRequest) return _generateError(null, 'Invalid Request', 'No request found');
-            if (!jsonRequest.id) return _generateError(null, 'Invalid Request', 'ID must be specified');
-            if (!jsonRequest.method) return _generateError(jsonRequest.id, 'Invalid Request', 'Method must be specified');
-            var reqId = jsonRequest.id,
-                methodArr = jsonRequest.method.split('\.'),
+        _dispatchSingle = function (jReq) {
+            if (!jReq) return _generateError(null, 'Invalid Request', 'No request found');
+            if (!jReq.id) return _generateError(null, 'Invalid Request', 'ID must be specified');
+            if (!jReq.method) return _generateError(jReq.id, 'Invalid Request', 'Method must be specified');
+            var reqId = jReq.id,
+                methodArr = jReq.method.split('\.'),
                 handler = _modules[methodArr[0]];
-            if (!handler || !handler.hasOwnProperty(methodArr[1])) return _generateError(reqId, 'Method Not Found', handler + " doesn't have " + jsonRequest.method);
-            var response, 
-            	parameters = jsonRequest.params;
+            if (!handler || !handler.hasOwnProperty(methodArr[1])) return _generateError(reqId, 'Method Not Found', handler + " doesn't have " + jReq.method);
+            
+            
             try {
-                if (!Array.isArray(parameters)) {
+            	// Invoke delegation to prehandle request object
+            	if (JRPCServer.preHandleDelegate) JRPCServer.preHandleDelegate(jReq);
+            	
+            	var parameters = jReq.params;
+            	
+                if (!Array.isArray(parameters)) {  // handle map parameters
                     parameters = [];
                     var i, 
                     	paramList = handler[methodArr[1]].toString().match(/\(.*?\)/)[0].match(/[\w]+/g);
                     for (i = 0; i < paramList.length; i++) {
-                        parameters.push(jsonRequest.params[paramList[i]]);
+                        parameters.push(jReq.params[paramList[i]]);
                     }
                 }
-                response = handler[methodArr[1]].apply(handler, parameters);
+                return {
+                	jsonrpc: '2.0',
+                	result: handler[methodArr[1]].apply(handler, parameters),
+                	id: reqId
+            	};
             }
             catch (e) {
                 return _generateError(reqId, 'Internal Error', e);
             }
-            return {
-                jsonrpc: '2.0',
-                result: response,
-                id: reqId
-            };
         },
         _handleInvalidRequest = function(code, message, res) {
             res.writeHead(code, {
@@ -75,7 +86,7 @@ var JRPCServer = (function() {
         },
         customPaths: { //Allow custom handlers for certain paths
             '/version': function(url, res) {
-                return JRPCServer.output('0.1.0', res);
+                return JRPCServer.output('1.0.0', res);
             }
         },
         output: function(jsonResponse, res) {
@@ -86,7 +97,7 @@ var JRPCServer = (function() {
             });
             res.end(result);
         },
-        
+        preHandleDelegate: function (singleReq) {},
         handle: function(req, res) {
             //Only accept GET & POST methods
             if (req.method != 'POST' && req.method != 'GET') return _handleInvalidRequest(400, 'Method can only be GET or POST', res);

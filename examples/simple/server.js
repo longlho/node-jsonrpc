@@ -1,5 +1,5 @@
 var http = require('http');
-var jrpcServer = require('./njrpc');
+var jrpcServer = require('../../njrpc');
 var EchoHandler = require('./handler');
 
 var PORT=8080;
