@@ -8,12 +8,12 @@
 var URL = require('url');
 var JRPCServer = (function() {
     var _errors = {
-        'Parse Error': -32700,
-        'Invalid Request': -32600,
-        'Method Not Found': -32601,
-        'Invalid Params': -32602,
-        'Internal Error': -32603
-    },
+	        'Parse Error': -32700,
+	        'Invalid Request': -32600,
+	        'Method Not Found': -32601,
+	        'Invalid Params': -32602,
+	        'Internal Error': -32603
+	    },
         _modules = {},
         _preHandle = null,
         _customPaths = { 
@@ -87,8 +87,14 @@ var JRPCServer = (function() {
         
         
     return {
-        registerModule: function(module) {
-            _modules[module.name] = module;
+        register: function(modules) {
+        	if (Array.isArray(modules)) {
+        		for (var i = 0; i < modules.length; i++) {
+        			_modules[modules[i].name] = modules[i];
+        		}
+        	} else {
+            	_modules[modules.name] = modules;
+            }
         },
         addCustomPath : function (url, handlerFn) { //Allow custom handlers for certain paths
         	_customPaths[url] = handleFn;

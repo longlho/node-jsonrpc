@@ -1,12 +1,23 @@
-var http = require('http');
-var jrpcServer = require('../../njrpc');
-var AuthenticatedEchoHandler = require('./AuthenticatedEchoHandler');
+var http = require('http'),
+	jrpcServer = require('../../njrpc'),
+	AuthenticatedEchoHandler = require('./AuthenticatedEchoHandler'),
+	PORT=8080,
+	preHandler = function (jsonReq) {
+		if (jsonReq.headers) {
+			if (Array.isArray(jsonReq.params)) {
+				jsonReq.params.unshift(jsonReq.headers);
+			} else {
+				jsonReq.params.context = jsonReq.headers;
+			}
+		}
+	}
+	
+	
 
-var PORT=8080;
-jrpcServer.registerModule(new AuthenticatedEchoHandler());
+jrpcServer.register(new AuthenticatedEchoHandler());
 
 
 http.createServer(function(req, res) {
-    jrpcServer.handle(req, res);
+    jrpcServer.handle(req, res, preHandler);
 }).listen(PORT);
 console.log('Server running at port ' + PORT);

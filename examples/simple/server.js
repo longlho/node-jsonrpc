@@ -3,7 +3,7 @@ var jrpcServer = require('../../njrpc');
 var EchoHandler = require('./handler');
 
 var PORT=8080;
-jrpcServer.registerModule(new EchoHandler());
+jrpcServer.register(new EchoHandler());
 
 http.createServer(function(req, res) {
     jrpcServer.handle(req, res);
