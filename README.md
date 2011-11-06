@@ -10,11 +10,16 @@ This is a JSON-RPC protocol implementation in NodeJS that follows JSON-RPC 2.0 s
 - Authentication (in progress)
 
 ## Usage
-	var echoHandler = require('./handler');
-	var jrpcServer = require('./jrpc');
+Handler that can be registered with njrpc should have name attribute in the instance. A sample handler can be found in handler.js
+
+The best design pattern to use with this server is the Module design pattern
+
+
+	var EchoHandler = require('./handler');
+	var jrpcServer = require('./njrpc');
 	var http = require('http');
 	
-	jrpcServer.registerModule(echoHandler.init());
+	jrpcServer.registerModule(new EchoHandler());
 	http.createServer(function(req, res) {
 		jrpcServer.handle(req, res);	
 	}).listen(8080);

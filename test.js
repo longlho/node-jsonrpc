@@ -1,9 +1,3 @@
-var http = require('http'),
-	assert = require('assert'),
-	jrpcs = require('./jrpc'),
-	echoHandler = require('./handler');
-	
-	
 function getOptions () {
 	return {
         hostname: 'localhost',
@@ -12,7 +6,11 @@ function getOptions () {
     };
 };
 
-var checkOKResponse = function(res) {
+var http = require('http'),
+	assert = require('assert'),
+	jrpcs = require('./njrpc'),
+	EchoHandler = require('./handler'),
+	checkOKResponse = function(res) {
         assert.equal(200, res.statusCode, "Response should be 200");
         assert.equal('application/json', res.headers['content-type'], "Content Type should be application/json.");
         assert(res.headers['content-length'] > 0, 'Content Length should be set');
@@ -33,7 +31,7 @@ var checkOKResponse = function(res) {
         });
     },
     server = http.createServer(function(req, res) {
-        jrpcs.registerModule(echoHandler.init());
+        jrpcs.registerModule(new EchoHandler());
         jrpcs.handle(req, res);
     }),
     samplePostRequest = function(methodName, parameters, uid, mode) {

@@ -1,4 +1,4 @@
-this.init = function () {
+var EchoHandler = function () {
 	return {
 		name : 'EchoHandler',
 		echo : function(str) {
@@ -9,3 +9,5 @@ this.init = function () {
 		}
 	};
 };
+
+module.exports = EchoHandler;
