@@ -8,4 +8,4 @@ this.init = function () {
 			return str1 + str2;
 		}
 	};
-}
+};
