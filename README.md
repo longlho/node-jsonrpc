@@ -21,6 +21,7 @@ Registers an array of modules/a single module, which should have `name` as the n
 ### njrpc.addCustomPath(url, handlerFn)
 Add `handlerFn` to custom path, for example '/version' can return version number as plain text instead of json request.
 `handlerFn` will have 2 arguments:
+
 - `req`: Request object
 - `res`: Response object to write to
 
