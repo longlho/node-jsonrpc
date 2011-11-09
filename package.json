@@ -9,7 +9,7 @@
   	},
   	"main": "jrpc.js",
   	"engines": {
-		"node": ">= v0.6.0"
+		"node": ">= v0.4.0"
   	},
   	"dependencies": {},
   	"devDependencies": {},
