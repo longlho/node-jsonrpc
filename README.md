@@ -2,16 +2,16 @@
 This is a JSON-RPC protocol implementation in NodeJS that follows JSON-RPC 2.0 specs. The good and also bad thing about this library is that it enforces method handler modules to have a certain convention/design pattern. However, it allows the server to automatically extract documentation from the handler (Introspection). This library is still under development.
 
 ## Features
-- Handle GET/POST request
-- Better error feedbacks
-- Allow method namespacing (Module.method)
-- Allow exposure of all methods inside a module
-- Authentication can be achieved with giving a preHandle function
+- Handles GET/POST requests
+- Better error feedback
+- Allows method namespacing (Module.method)
+- Allows exposure of all methods inside a module
+- Authentication can be achieved by giving a preHandle function
 - Introspection (in progress)
 
 
 ## Usage
-Handler that can be registered with njrpc should have name attribute in the instance. A sample handler can be found in handler.js
+Handlers that can be registered with njrpc should have a name attribute in the instance. A sample handler can be found in handler.js.
 
 The best design pattern to use with this server is the Module design pattern.
 
@@ -19,21 +19,21 @@ The best design pattern to use with this server is the Module design pattern.
 Registers an array of modules/a single module, which should have `name` as the namespace of the module.
 
 ### njrpc.addCustomPath(url, handlerFn)
-Add `handlerFn` to custom path, for example '/version' can return version number as plain text instead of json request.
-`handlerFn` will have 2 arguments:
+Add `handlerFn` to a custom path, for example '/version' can return the version number as plain text instead of a JSON request.
+`handlerFn` will have 2 arguments:             
 
 - `req`: Request object
 - `res`: Response object to write to
 
 ### njrpc.output(res, [jsonResponse])
-Actually write the json response out to the pipe. This can also be overridden to write something else.
+Actually write the JSON response out to the pipe. This can also be overridden to write something else.
 
 ### njrpc.handle(req, res, [preHandleFn])
-Handles request & response, JSON-RPC style. `preHandleFn` is used to manipulate json request before it got pushed down to Handler level. `preHandleFn` takes a single json request object as the argument (after parsing and whitelisting)
+Handles a request & response, JSON-RPC style. `preHandleFn` is used to manipulate the JSON request before it gets pushed down to the Handler level. `preHandleFn` takes a single JSON request object as the argument (after parsing and whitelisting)
 
 ## Examples
 
-### Simple EchoHandler that echo whatever it receives
+### Simple EchoHandler that echoes whatever it receives
 
 	var EchoHandler = function () {
 			return {
@@ -51,7 +51,7 @@ Handles request & response, JSON-RPC style. `preHandleFn` is used to manipulate 
 		jrpcServer.handle(req, res);	
 	}).listen(8080);
 	
-### Authenticated Echo Handler that still echoes, but needs user & token
+### Authenticated Echo Handler that still echoes, but needs a user & token
 
 	var AuthenticatedEchoHandler = function () {
 			return {

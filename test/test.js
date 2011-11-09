@@ -15,7 +15,8 @@ var http = require('http'),
 	},
 	banner = function (message) { console.log(message + '\n---------'); },
 	server = http.createServer(function(req, res) {
-        jrpcs.register([new EchoHandler(), new AuthenticatedEchoHandler()]);
+       	// Register the handlers with JRPC
+		jrpcs.register([new EchoHandler(), new AuthenticatedEchoHandler()]);
         jrpcs.handle(req, res, preHandler);
     });
     
@@ -68,7 +69,7 @@ TestManager.suite.push(function() {
         Helper.checkResponseCompliant(reqId, res, function(json) {
             assert(!json.error, "Should not be error " + JSON.stringify(json));
             assert.equal(json.result, 'test');
-            TestManager.finish('Test EchoHandler.echo request… passed');
+            TestManager.finish('Test EchoHandler.echo GET request… passed');
         });
     }).end();
 });
