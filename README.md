@@ -9,6 +9,8 @@ This is a JSON-RPC protocol implementation in NodeJS that follows JSON-RPC 2.0 s
 - Authentication can be achieved by giving a preHandle function
 - Introspection (in progress)
 
+## Installation
+The usual `npm install njrpc` or if you prefer, you can grab the source/fork it and make changes yourself.
 
 ## Usage
 Handlers that can be registered with njrpc should have a name attribute in the instance. A sample handler can be found in handler.js.
