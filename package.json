@@ -2,12 +2,12 @@
   	"author": "Long Ho <holevietlong@gmail.com> (www.azndezign.com)",
   	"name": "njrpc",
   	"description": "JSON-RPC v2.0 implementation in NodeJS",
-  	"version": "1.0.1",
+  	"version": "1.0.2",
   	"repository": {
     	"type": "git",
     	"url": "git://github.com/longlho/node-jsonrpc.git"
   	},
-  	"main": "jrpc.js",
+  	"main": "njrpc.js",
   	"engines": {
 		"node": ">= v0.4.0"
   	},
