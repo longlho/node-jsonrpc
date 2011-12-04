@@ -44,6 +44,18 @@ TestManager.suite.push(function() {
         TestManager.finish('Test empty body POST request… passed');
     }).end();
 });
+
+TestManager.suite.push(function() {
+	var options = Helper.getOptions();
+		options.method = 'GET';
+    http.request(options, function(res) {
+        Helper.checkResponseCompliant(null, res, function(json) {
+            assert(json.error, "Should be error");
+            assert(json.error.message.indexOf("ID must be specified") > -1, "Error message should be Method Not Found, but was " + JSON.stringify(json.error));
+            TestManager.finish('Test empty GET method… passed');
+        });
+    }).end();
+});
     
 TestManager.suite.push(function() {
     var reqId = 1,

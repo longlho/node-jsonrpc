@@ -7,7 +7,7 @@ var Helper = (function () {
         	assert(res.headers['content-length'] > 0, 'Content Length should be set');
     	},
     	checkBadResponse : function(res) {
-        	assert.notEqual(200, res.statusCode, "Response should not be 200");
+        	assert.notEqual(200, res.statusCode, "Response should not be 200 " + res.statusCode);
         	assert.equal('text/plain', res.headers['content-type'], "Content Type should be text/plain");
         	assert(res.headers['content-length'] > 0, 'Content Length should be set');
     	},

@@ -145,9 +145,11 @@ var JRPCServer = (function() {
                     return JRPCServer.output(res, _dispatch(jsonRequest));
                 });
             }
-            else if (req.method == 'GET') { //Allow GET method with params following JSON-RPC spec
+            else { //Allow GET method with params following JSON-RPC spec
                 var jsonRequest = url.query;
-                jsonRequest.params = JSON.parse(jsonRequest.params);
+                if (typeof jsonRequest.params === 'string') {
+                	jsonRequest.params = JSON.parse(jsonRequest.params);
+                }
                 return JRPCServer.output(res, _dispatch(jsonRequest));
             }
         }
