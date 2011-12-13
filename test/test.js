@@ -28,7 +28,7 @@ var TestManager = {
     finish: function(message) {
         TestManager.done++;
         banner(message);
-        if (TestManager.done == (TestManager.suite.length)) server.close();
+        if (TestManager.done === TestManager.suite.length) server.close();
     },
     suite : [],
     run : function () {
@@ -239,6 +239,47 @@ TestManager.suite.push(function() {
     }).end(JSON.stringify(req));
 });
 
+TestManager.suite.push(function() {
+    var reqId = 2,
+    	options = Helper.getOptions();
+    options.method = 'GET';
+    options.path = "/" + Helper.sampleGetRequest("EchoHandler.echoCallback", ['test'], reqId);
+    http.request(options, function(res) {
+        Helper.checkResponseCompliant(reqId, res, function(json) {
+            assert(!json.error, "Should not be error " + JSON.stringify(json));
+            assert.equal(json.result, 'test');
+            TestManager.finish('Test EchoHandler.echoCallback GET request… passed');
+        });
+    }).end();
+});
+    
+TestManager.suite.push(function() {
+    var reqId = 2,
+        body = Helper.samplePostRequest("EchoHandler.echoCallback", ['test'], reqId);
+    http.request(Helper.getOptions(), function(res) {
+        Helper.checkResponseCompliant(reqId, res, function(json) {
+            assert(!json.error, "Should not be error " + JSON.stringify(json));
+            assert.equal(json.result, 'test');
+            TestManager.finish('Test EchoHandler.echoCallback POST request… passed');
+        });
+    }).end(body);
+});
+
+TestManager.suite.push(function() {
+    var reqId = 2,
+    	options = Helper.getOptions();
+    options.method = 'GET';
+    options.path = "/" + Helper.sampleGetRequest("EchoHandler.echoCallback", {
+        str: 'test callback map'
+    }, reqId);
+    http.request(options, function(res) {
+        Helper.checkResponseCompliant(reqId, res, function(json) {
+            assert(!json.error, "Should not be error " + JSON.stringify(json));
+            assert.equal(json.result, 'test callback map');
+            TestManager.finish('Test EchoHandler.echoCallback with Map param request… passed');
+        });
+    }).end();
+});
 
 
 // Start server and test

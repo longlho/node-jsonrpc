@@ -33,24 +33,29 @@ var JRPCServer = (function() {
                 id: reqId
             };
         },
-        _dispatch = function (jsonRequest) {
+        _dispatchInternal = function (res, jsonRequest) {
         	if (Array.isArray(jsonRequest)) { // handles batching calls
-        		var result = [];
+        		var results = [];
         		for (var i = 0; i < jsonRequest.length; i++) {
-        			result.push(_dispatchSingle(jsonRequest[i]));
+        			_dispatchSingle(jsonRequest[i], function (result) {
+						results.push(result);
+						if (results.length === jsonRequest.length) JRPCServer.output(res, results);        				
+        			});
         		}
-        		return result;
+        		return;
         	}
-        	return _dispatchSingle(jsonRequest);
+        	return _dispatchSingle(jsonRequest, function (result) {
+        		JRPCServer.output(res, result);	
+        	});
         },
-        _dispatchSingle = function (jReq) {
-            if (!jReq) return _generateError(null, 'Invalid Request', 'No request found');
-            if (!jReq.id) return _generateError(null, 'Invalid Request', 'ID must be specified');
-            if (!jReq.method) return _generateError(jReq.id, 'Invalid Request', 'Method must be specified');
+        _dispatchSingle = function (jReq, callbackFn) {
+            if (!jReq) return callbackFn(_generateError(null, 'Invalid Request', 'No request found'));
+            if (!jReq.id) return callbackFn(_generateError(null, 'Invalid Request', 'ID must be specified'));
+            if (!jReq.method) return callbackFn(_generateError(jReq.id, 'Invalid Request', 'Method must be specified'));
             var reqId = jReq.id,
                 methodArr = jReq.method.split('\.'),
                 handler = _modules[methodArr[0]];
-            if (!handler || !handler.hasOwnProperty(methodArr[1])) return _generateError(reqId, 'Method Not Found', handler + " doesn't have " + jReq.method);
+            if (!handler || !handler.hasOwnProperty(methodArr[1])) return callbackFn(_generateError(reqId, 'Method Not Found', handler + " doesn't have " + jReq.method));
             
             
             try {
@@ -61,20 +66,32 @@ var JRPCServer = (function() {
             	
                 if (!Array.isArray(parameters)) {  // handle map parameters
                     parameters = [];
-                    var i, 
-                    	paramList = handler[methodArr[1]].toString().match(/\(.*?\)/)[0].match(/[\w]+/g);
-                    for (i = 0; i < paramList.length; i++) {
-                        parameters.push(jReq.params[paramList[i]]);
+                    var paramList = handler[methodArr[1]].toString().match(/\(.*?\)/)[0].match(/[\w]+/g);
+                    for (var i = 0; i < paramList.length; i++) {
+						if (paramList[i] in jReq.params) {
+                        	parameters.push(jReq.params[paramList[i]]);
+                       	}
                     }
                 }
-                return {
-                	jsonrpc: '2.0',
-                	result: handler[methodArr[1]].apply(handler, parameters),
-                	id: reqId
-            	};
+                parameters.push(function(result) {
+                	callbackFn({
+                		jsonrpc: '2.0',
+                		result: result,
+                		id: reqId
+            		});                	
+                });
+                
+                var result = handler[methodArr[1]].apply(handler, parameters);
+                if (result) {
+                	return callbackFn({
+                		jsonrpc: '2.0',
+                		result: result,
+                		id: reqId
+            		});
+                } 
             }
             catch (e) {
-                return _generateError(reqId, 'Internal Error', e);
+            	return callbackFn(_generateError(reqId, 'Internal Error', e));
             }
         },
         _handleInvalidRequest = function(code, message, res) {
@@ -101,7 +118,7 @@ var JRPCServer = (function() {
         },
         output: function(res, jsonResponse) {
         	var result = typeof jsonResponse == 'string' ? jsonResponse : JSON.stringify(jsonResponse);
-            res.writeHead(200, {
+        	res.writeHead(200, {
                 'Content-Type': 'application/json',
                 'Content-Length': result.length
             });
@@ -142,7 +159,7 @@ var JRPCServer = (function() {
                     catch (err) {
                         return JRPCServer.output(res, _generateError(null, "Parse Error", err + ". Cannot parse message body: " + jsonString));
                     }
-                    return JRPCServer.output(res, _dispatch(jsonRequest));
+                    _dispatchInternal(res, jsonRequest);
                 });
             }
             else { //Allow GET method with params following JSON-RPC spec
@@ -150,7 +167,7 @@ var JRPCServer = (function() {
                 if (typeof jsonRequest.params === 'string') {
                 	jsonRequest.params = JSON.parse(jsonRequest.params);
                 }
-                return JRPCServer.output(res, _dispatch(jsonRequest));
+                _dispatchInternal(res, jsonRequest);
             }
         }
     };
