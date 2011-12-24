@@ -5,7 +5,7 @@ var assert = require('assert'),
             checkBadResponse: function(res) {
                 assert.notEqual(200, res.statusCode, "Response should not be 200 " + res.statusCode);
                 assert.equal('text/plain', res.headers['content-type'], "Content Type should be text/plain");
-                assert(res.headers['content-length'] > 0, 'Content Length should be set');
+                assert.ok(res.headers['content-length'] > 0, 'Content Length should be set');
             },
             getOptions: function() {
                 return {
