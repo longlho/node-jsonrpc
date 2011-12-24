@@ -51,10 +51,10 @@ vows.describe('Node-JsonRPC Server').addBatch({
                     assert.equal(null, json.id);
                 },
                 'that has error' : function (json) {
-                    assert(json.error, "Should be error");
+                    assert.ok(json.error, "Should be error");
                 },
                 'that has method not found error message' : function (json) {
-                    assert(json.error.message.indexOf("ID must be specified") > -1, "Error message should be Method Not Found, but was " + JSON.stringify(json.error));
+                    assert.ok(json.error.message.indexOf("ID must be specified") > -1, "Error message should be Method Not Found, but was " + JSON.stringify(json.error));
                 }
                 
             }
@@ -74,10 +74,10 @@ vows.describe('Node-JsonRPC Server').addBatch({
                     assert.equal(1, json.id);
                 },
                 'that has error' : function (json) {
-                    assert(json.error, "Should be error");
+                    assert.ok(json.error, "Should be error");
                 },
                 'that has method not found error message' : function (json) {
-                    assert(json.error.message.indexOf("Method Not Found") > -1, "Error message should be Method Not Found, but was " + JSON.stringify(json.error));
+                    assert.ok(json.error.message.indexOf("Method Not Found") > -1, "Error message should be Method Not Found, but was " + JSON.stringify(json.error));
                 }
             }
         },
@@ -96,7 +96,7 @@ vows.describe('Node-JsonRPC Server').addBatch({
                     assert.equal(2, json.id);
                 },
                 'that has no error' : function (json) {
-                    assert(!json.error, "Should not be error " + JSON.stringify(json));
+                    assert.ok(!json.error, "Should not be error " + JSON.stringify(json));
                 },
                 'that has same result as request param' : function (json) {
                     assert.equal(json.result, 'test');
@@ -116,7 +116,7 @@ vows.describe('Node-JsonRPC Server').addBatch({
                     assert.equal(2, json.id);
                 },
                 'that has no error' : function (json) {
-                    assert(!json.error, "Should not be error " + JSON.stringify(json));
+                    assert.ok(!json.error, "Should not be error " + JSON.stringify(json));
                 },
                 'that has same result as request param' : function (json) {
                     assert.equal(json.result, 'test');
@@ -140,7 +140,7 @@ vows.describe('Node-JsonRPC Server').addBatch({
                     assert.equal(2, json.id);
                 },
                 'that has no error' : function (json) {
-                    assert(!json.error, "Should not be error " + JSON.stringify(json));
+                    assert.ok(!json.error, "Should not be error " + JSON.stringify(json));
                 },
                 'that has same result as request param' : function (json) {
                     assert.equal(json.result, 'test');
@@ -160,7 +160,7 @@ vows.describe('Node-JsonRPC Server').addBatch({
                     assert.equal(20, json.id);
                 },
                 'that has no error' : function (json) {
-                    assert(!json.error, "Should not be error " + JSON.stringify(json));
+                    assert.ok(!json.error, "Should not be error " + JSON.stringify(json));
                 },
                 'that has same result as combo of request params' : function (json) {
                     assert.equal(json.result, 'test post is good');
@@ -180,7 +180,7 @@ vows.describe('Node-JsonRPC Server').addBatch({
             'should produce a list of responses' : {
                 topic : Helper.parseResponse,
                 'that has no error' : function (json) {
-                    assert(!json.error, "Should not be error " + JSON.stringify(json));
+                    assert.ok(!json.error, "Should not be error " + JSON.stringify(json));
                 },
                 'that has 2 responses' : function (json) {
                     assert.equal(json.length, 2);
@@ -197,7 +197,7 @@ vows.describe('Node-JsonRPC Server').addBatch({
                             assert.equal(json[i].result, 'test2');
                         }
                     }
-                    assert(found99 && found98);
+                    assert.ok(found99 && found98);
                 }
             }
         },
@@ -218,7 +218,7 @@ vows.describe('Node-JsonRPC Server').addBatch({
                     assert.equal(21, json.id);
                 },
                 'that has no error' : function (json) {
-                    assert(!json.error, "Should not be error " + JSON.stringify(json));
+                    assert.ok(!json.error, "Should not be error " + JSON.stringify(json));
                 },
                 'that has same result as combo of request params' : function (json) {
                     assert.equal(json.result, 'test post');
@@ -243,10 +243,10 @@ vows.describe('Node-JsonRPC Server').addBatch({
                     assert.equal(21, json.id);
                 },
                 'that has error' : function (json) {
-                    assert(json.error);
+                    assert.ok(json.error);
                 },
                 'that has no result' : function (json) {
-                    assert(!json.result);
+                    assert.ok(!json.result);
                 },
                 'that has error message saying missing credential' : function (json) {
                     assert.equal(json.error.message, 'Internal Error. Error: This call has to be authenticated');
@@ -269,10 +269,10 @@ vows.describe('Node-JsonRPC Server').addBatch({
                     assert.equal(21, json.id);
                 },
                 'that has error' : function (json) {
-                    assert(json.error);
+                    assert.ok(json.error);
                 },
                 'that has no result' : function (json) {
-                    assert(!json.result);
+                    assert.ok(!json.result);
                 },
                 'that has error message saying missing credential' : function (json) {
                     assert.equal(json.error.message, 'Internal Error. Error: This call has to be authenticated');
@@ -292,7 +292,7 @@ vows.describe('Node-JsonRPC Server').addBatch({
                     assert.equal(2, json.id);
                 },
                 'that has no error' : function (json) {
-                    assert(!json.error, "Should not be error " + JSON.stringify(json));
+                    assert.ok(!json.error, "Should not be error " + JSON.stringify(json));
                 },
                 'that has same result as request param' : function (json) {
                     assert.equal(json.result, 'test');
@@ -314,7 +314,7 @@ vows.describe('Node-JsonRPC Server').addBatch({
                     assert.equal(2, json.id);
                 },
                 'that has no error' : function (json) {
-                    assert(!json.error, "Should not be error " + JSON.stringify(json));
+                    assert.ok(!json.error, "Should not be error " + JSON.stringify(json));
                 },
                 'that has same result as request param' : function (json) {
                     assert.equal(json.result, 'test');
@@ -338,7 +338,7 @@ vows.describe('Node-JsonRPC Server').addBatch({
                     assert.equal(2, json.id);
                 },
                 'that has no error' : function (json) {
-                    assert(!json.error, "Should not be error " + JSON.stringify(json));
+                    assert.ok(!json.error, "Should not be error " + JSON.stringify(json));
                 },
                 'that has same result as request param' : function (json) {
                     assert.equal(json.result, 'test callback map');
