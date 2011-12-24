@@ -16,6 +16,6 @@
 		"vows" : "latest"
 	},
   	"scripts" : {
-  		"test" : "node test/test.js"
+  		"test" : "vows test/test.js --spec"
   	}
 }
