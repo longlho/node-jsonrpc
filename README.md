@@ -67,8 +67,8 @@ var AuthenticatedEchoHandler = function () {
 				return str;
 			}
 		};
-	},
-	preHandler = function (jsonReq) {
+	}
+,	preHandler = function (jsonReq) {
 		if (jsonReq.headers) {
 			Array.isArray(jsonReq.params)
 			? jsonReq.params.unshift(jsonReq.headers);
