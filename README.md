@@ -1,4 +1,4 @@
-[![Build Status](https://secure.travis-ci.org/longlho/node-jsonrpc.png)](https://secure.travis-ci.org/longlho/node-jsonrpc)
+[![Build Status](http://travis-ci.org/LafColDevs/metadb-core.png)](http://travis-ci.org/LafColDevs/metadb-core)
 
 # Overview
 This is a JSON-RPC protocol implementation in NodeJS that follows JSON-RPC 2.0 specs. The good and also bad thing about this library is that it enforces method handler modules to have a certain convention/design pattern. However, it allows the server to automatically extract documentation from the handler (Introspection). This library is still under development.
