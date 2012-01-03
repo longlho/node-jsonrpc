@@ -71,8 +71,8 @@ var AuthenticatedEchoHandler = function () {
 ,	preHandler = function (jsonReq) {
 		if (jsonReq.headers) {
 			Array.isArray(jsonReq.params)
-			? jsonReq.params.unshift(jsonReq.headers);
-			: jsonReq.params.context = jsonReq.headers;
+			? jsonReq.params.unshift(jsonReq.headers)
+			: jsonReq.params.context = jsonReq.headers
 		}
 	}
 ,	jrpcServer = require('njrpc')
