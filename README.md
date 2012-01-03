@@ -47,14 +47,12 @@ var EchoHandler = function () {
 				return str;
 			}
 		};
-	},
-	jrpcServer = require('./njrpc'),
-	http = require('http');
+	}
+,	jrpcServer = require('njrpc')
+,	http = require('http');
 
 jrpcServer.registerModule(new EchoHandler());
-http.createServer(function(req, res) {
-	jrpcServer.handle(req, res);	
-}).listen(8080);
+http.createServer(jrpcServer.handle).listen(8080);
 ```
 ### Authenticated Echo Handler that still echoes, but needs a user & token
 
@@ -72,17 +70,16 @@ var AuthenticatedEchoHandler = function () {
 	},
 	preHandler = function (jsonReq) {
 		if (jsonReq.headers) {
-			if (Array.isArray(jsonReq.params)) {
-				jsonReq.params.unshift(jsonReq.headers);
-			} else {
-				jsonReq.params.context = jsonReq.headers;
-			}
+			Array.isArray(jsonReq.params)
+			? jsonReq.params.unshift(jsonReq.headers);
+			: jsonReq.params.context = jsonReq.headers;
 		}
-	},
-	jrpcServer = require('./njrpc'),
-	http = require('http');
+	}
+,	jrpcServer = require('njrpc')
+,	http = require('http');
 
 jrpcServer.registerModule(new AuthenticatedEchoHandler());
+
 http.createServer(function(req, res) {
 	jrpcServer.handle(req, res, preHandler);	
 }).listen(8080);
