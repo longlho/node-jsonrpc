@@ -7,14 +7,14 @@
 var URL = require('url');
 var JRPCServer = (function() {
     var _errors = {
-        'Parse Error': -32700,
-        'Invalid Request': -32600,
-        'Method Not Found': -32601,
-        'Invalid Params': -32602,
-        'Internal Error': -32603
-    }
+            'Parse Error': -32700,
+            'Invalid Request': -32600,
+            'Method Not Found': -32601,
+            'Invalid Params': -32602,
+            'Internal Error': -32603
+        }
     ,   _modules = {}
-    ,   _preHandle = null
+    ,   _preHandle
     ,   _customPaths = {
             '/version': function(req, res) { return JRPCServer.output(res, '1.0.3'); }
         }
@@ -40,9 +40,7 @@ var JRPCServer = (function() {
                     });
                 return;
             }
-            return _dispatchSingle(jsonRequest, function(result) {
-                JRPCServer.output(res, result);
-            });
+            return _dispatchSingle(jsonRequest, function(result) { JRPCServer.output(res, result); });
         }
     ,   _dispatchSingle = function(jReq, callbackFn) {
             if (!jReq) return callbackFn(_generateError(null, 'Invalid Request', 'No request found'));
@@ -63,8 +61,6 @@ var JRPCServer = (function() {
                     for (var i = 0; i < paramList.length; i++) 
                         if (paramList[i] in jReq.params) 
                             parameters.push(jReq.params[paramList[i]]);
-                        
-                    
                 }
                 parameters.push(function(result) {
                     callbackFn({
