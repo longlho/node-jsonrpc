@@ -9,7 +9,7 @@ This is a JSON-RPC protocol implementation in NodeJS that follows JSON-RPC 2.0 s
 - Allows method namespacing (Module.method)
 - Allows exposure of all methods inside a module
 - Authentication can be achieved by giving a preHandle function
-- Introspection (in progress)
+- Introspection (currently planning)
 
 ## Installation
 The usual `npm install njrpc` or if you prefer, you can grab the source/fork it and make changes yourself.
