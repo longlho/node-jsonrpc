@@ -115,6 +115,7 @@ var JRPCServer = (function() {
             //Only accept GET & POST methods
             if (req.method != 'POST' && req.method != 'GET') return _handleInvalidRequest(400, 'Method can only be GET or POST', res);
             var url;
+
             //Parse the URL
             try { url = URL.parse(req.url, true); }
             catch (e) { return _handleInvalidRequest(400, 'Malformed Request', res); }

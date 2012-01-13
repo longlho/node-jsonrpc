@@ -1,12 +1,12 @@
-var http = require('http'),
-    vows = require('vows'),
-    events = require('events'),
-    assert = require('assert'),
-    jrpcs = require('../njrpc'),
-    Helper = require('./helper'),
-    EchoHandler = require('./EchoHandler'),
-    AuthenticatedEchoHandler = require('./AuthenticatedEchoHandler'),
-    preHandler = function(jsonReq) {
+var http = require('http')
+,   vows = require('vows')
+,   events = require('events')
+,   assert = require('assert')
+,   jrpcs = require('../njrpc')
+,   Helper = require('./helper')
+,   EchoHandler = require('./EchoHandler')
+,   AuthenticatedEchoHandler = require('./AuthenticatedEchoHandler')
+,   preHandler = function(jsonReq) {
         if (jsonReq.headers) {
             if (Array.isArray(jsonReq.params)) {
                 jsonReq.params.unshift(jsonReq.headers);
@@ -15,8 +15,8 @@ var http = require('http'),
                 jsonReq.params.context = jsonReq.headers;
             }
         }
-    },
-    server = http.createServer(function(req, res) {
+    }
+,   server = http.createServer(function(req, res) {
         // Register the handlers with JRPC
         jrpcs.register([new EchoHandler(), new AuthenticatedEchoHandler()]);
         jrpcs.handle(req, res, preHandler);
