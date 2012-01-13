@@ -1,4 +1,6 @@
 # Overview
+[![Build Status](https://secure.travis-ci.org/longlho/node-jsonrpc.png)](https://secure.travis-ci.org/longlho/node-jsonrpc)
+
 This is a JSON-RPC protocol implementation in NodeJS that follows JSON-RPC 2.0 specs. The good and also bad thing about this library is that it enforces method handler modules to have a certain convention/design pattern. However, it allows the server to automatically extract documentation from the handler (Introspection). This library is still under development.
 
 ## Features
@@ -37,49 +39,48 @@ Handles a request & response, JSON-RPC style. `preHandleFn` is used to manipulat
 
 ### Simple EchoHandler that echoes whatever it receives
 
-	var EchoHandler = function () {
-			return {
-				name : 'EchoHandler',
-				echo : function (str) {
-					return str;
-				}
-			};
-		},
-		jrpcServer = require('./njrpc'),
-		http = require('http');
-	
-	jrpcServer.registerModule(new EchoHandler());
-	http.createServer(function(req, res) {
-		jrpcServer.handle(req, res);	
-	}).listen(8080);
-	
+```javascript
+var EchoHandler = function () {
+		return {
+			name : 'EchoHandler',
+			echo : function (str) {
+				return str;
+			}
+		};
+	}
+,	jrpcServer = require('njrpc')
+,	http = require('http');
+
+jrpcServer.registerModule(new EchoHandler());
+http.createServer(jrpcServer.handle).listen(8080);
+```
 ### Authenticated Echo Handler that still echoes, but needs a user & token
 
-	var AuthenticatedEchoHandler = function () {
-			return {
-				name : 'AuthenticatedEchoHandler',
-				echo : function(context, str) {
-					if (!context.user || !context.token) {
-						throw new Error("This call is unauthenticated");
-					}
-					return str;
+```javascript
+var AuthenticatedEchoHandler = function () {
+		return {
+			name : 'AuthenticatedEchoHandler',
+			echo : function(context, str) {
+				if (!context.user || !context.token) {
+					throw new Error("This call is unauthenticated");
 				}
-			};
-		},
-		preHandler = function (jsonReq) {
-			if (jsonReq.headers) {
-				if (Array.isArray(jsonReq.params)) {
-					jsonReq.params.unshift(jsonReq.headers);
-				} else {
-					jsonReq.params.context = jsonReq.headers;
-				}
+				return str;
 			}
-		},
-		jrpcServer = require('./njrpc'),
-		http = require('http');
-	
-	jrpcServer.registerModule(new AuthenticatedEchoHandler());
-	http.createServer(function(req, res) {
-		jrpcServer.handle(req, res, preHandler);	
-	}).listen(8080);
+		};
+	}
+,	preHandler = function (jsonReq) {
+		if (jsonReq.headers) {
+			Array.isArray(jsonReq.params)
+			? jsonReq.params.unshift(jsonReq.headers)
+			: jsonReq.params.context = jsonReq.headers
+		}
+	}
+,	jrpcServer = require('njrpc')
+,	http = require('http');
 
+jrpcServer.registerModule(new AuthenticatedEchoHandler());
+
+http.createServer(function(req, res) {
+	jrpcServer.handle(req, res, preHandler);	
+}).listen(8080);
+```
