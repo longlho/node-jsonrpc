@@ -30,17 +30,19 @@ var JRPCServer = (function() {
                 id: reqId
             };
         }
-    ,   _dispatchInternal = function(res, jsonRequest) {
+    ,   _dispatchInternal = function(res, jsonRequest, callbackFn) {
             if (Array.isArray(jsonRequest)) { // handles batching calls
                 var results = [];
                 for (var i = 0; i < jsonRequest.length; i++) 
-                    _dispatchSingle(jsonRequest[i], function(result) {
-                        results.push(result);
-                        if (results.length === jsonRequest.length) JRPCServer.output(res, results);
+                    _dispatchSingle(jsonRequest[i], function(err, result) {
+                        results.push(err || result);
+                        if (results.length === jsonRequest.length) {
+                            return callbackFn(null, results);
+                        }
                     });
                 return;
             }
-            return _dispatchSingle(jsonRequest, function(result) { JRPCServer.output(res, result); });
+            return _dispatchSingle(jsonRequest, callbackFn);
         }
     ,   _dispatchSingle = function(jReq, callbackFn) {
             if (!jReq) return callbackFn(_generateError(null, 'Invalid Request', 'No request found'));
@@ -50,7 +52,9 @@ var JRPCServer = (function() {
             ,   methodArr = jReq.method.split('\.')
             ,   handler = _modules[methodArr[0]];
             
-            if (!handler || !handler.hasOwnProperty(methodArr[1])) return callbackFn(_generateError(reqId, 'Method Not Found', handler + " doesn't have " + jReq.method));
+            if (!handler || !handler.hasOwnProperty(methodArr[1])) {
+                return callbackFn(_generateError(reqId, 'Method Not Found', handler + " doesn't have " + jReq.method));
+            }
             try {
                 // Invoke delegation to prehandle request object
                 if (_preHandle) _preHandle(jReq);
@@ -58,26 +62,29 @@ var JRPCServer = (function() {
                 if (!Array.isArray(parameters)) { // handle map parameters
                     parameters = [];
                     var paramList = handler[methodArr[1]].toString().match(/\(.*?\)/)[0].match(/[\w]+/g);
-                    for (var i = 0; i < paramList.length; i++) 
-                        if (paramList[i] in jReq.params) 
+                    for (var i = 0; i < paramList.length; i++) {
+                        if (paramList[i] in jReq.params) {
                             parameters.push(jReq.params[paramList[i]]);
+                        }
+                    }
                 }
-                parameters.push(function(result) {
-                    callbackFn({
-                        jsonrpc: '2.0',
-                        result: result,
-                        id: reqId
-                    });
-                });
+                parameters.push(function (result) { return _handleRespResult(reqId, result, callbackFn); });
                 var result = handler[methodArr[1]].apply(handler, parameters);
-                if (result) 
-                    return callbackFn({
-                        jsonrpc: '2.0',
-                        result: result,
-                        id: reqId
-                    });
+                if (result) {
+                    return _handleRespResult(reqId, result, callbackFn);
+                }
             }
             catch (e) { return callbackFn(_generateError(reqId, 'Internal Error', e)); }
+        }
+    ,   _handleRespResult = function (reqId, result, callbackFn) {
+            if (result instanceof Error) {
+                return callbackFn(_generateError(reqId, 'Internal Error', result.message));
+            }
+            return callbackFn(null, {
+                jsonrpc: '2.0',
+                result: result,
+                id: reqId
+            });
         }
     ,   _handleInvalidRequest = function(code, message, res) {
             res.writeHead(code, {
@@ -113,12 +120,10 @@ var JRPCServer = (function() {
             var url;
 
             //Parse the URL
-            try { url = URL.parse(req.url, true); }
-            catch (e) { return _handleInvalidRequest(400, 'Malformed Request', res); }
+            url = URL.parse(req.url, true);
             //Allow certain paths to go thru
             if (url.pathname in _customPaths) {
-                try { return _customPaths[url.pathname](req, res); }
-                catch (er) { return _handleInvalidRequest(400, 'Error resolving path' + url.pathname, res); }
+                return _customPaths[url.pathname](req, res);
             }
             if (req.method == 'POST') {
                 //Grab POST request
@@ -126,14 +131,25 @@ var JRPCServer = (function() {
                 req.on('data', function(chunk) { jsonString += chunk; });
                 req.on('end', function() {
                     if (!jsonString.length) return _handleInvalidRequest(400, 'Body should not be empty in the request', res);
-                    try { return _dispatchInternal(res, JSON.parse(jsonString)); }
-                    catch (err) { return JRPCServer.output(res, _generateError(null, "Parse Error", err + ". Cannot parse message body: " + jsonString)); }
+                    try {
+                        return _dispatchInternal(res, JSON.parse(jsonString), function (err, result) {
+                            return JRPCServer.output(res, err || result);
+                        });
+                    } catch (err) {
+                        return JRPCServer.output(res, _generateError(null, "Parse Error", err + ". Cannot parse message body: " + jsonString)); 
+                    }
                 });
             }
             else { //Allow GET method with params following JSON-RPC spec
                 var jsonRequest = url.query;
                 if (typeof jsonRequest.params === 'string') jsonRequest.params = JSON.parse(jsonRequest.params);
-                _dispatchInternal(res, jsonRequest);
+                try {
+                    return _dispatchInternal(res, jsonRequest, function (err, result) {
+                        return JRPCServer.output(res, err || result);
+                    });
+                } catch (err) {
+                    return JRPCServer.output(res, _generateError(null, "Parse Error", err + ". Cannot parse message body: " + jsonString)); 
+                }
             }
         }
     };
