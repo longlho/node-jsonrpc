@@ -67,7 +67,7 @@ var EchoHandler = function () {
 ,	jrpcServer = require('njrpc')
 ,	http = require('http');
 
-jrpcServer.registerModule(new EchoHandler());
+jrpcServer.register(new EchoHandler());
 http.createServer(jrpcServer.handle).listen(8080);
 ```
 ### Authenticated Echo Handler that still echoes, but needs a user & token
