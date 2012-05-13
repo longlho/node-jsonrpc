@@ -19,12 +19,28 @@ Handlers that can be registered with njrpc should have a name attribute in the i
 
 The best design pattern to use with this server is the Module design pattern.
 
+### njrpc.errors
+List of errors that JSON-RPC server supports.
+
+### njrpc.modules
+Map of all the RPC module, in the form of `modules[className].methodName`
+
 ### njrpc.register(modules)
 Registers an array of modules/a single module, which should have `name` as the namespace of the module.
 
-### njrpc.addCustomPath(url, handlerFn)
-Add `handlerFn` to a custom path, for example '/version' can return the version number as plain text instead of a JSON request.
-`handlerFn` will have 2 arguments:             
+### njrpc.interceptor
+Interceptor capable of pre-processing json request before it get
+dispatched to Handler modules.
+This function takes in 2 parameters:
+
+- `jsonRequest`: JSON request object
+- `next`: Function signaling continuation of the process. Passing an
+  `Error` to this function will force server to return an error response
+instead of moving on.
+
+### njrpc.paths
+Map of custom URL to handler function. Handler function takes in 2
+arguments: 
 
 - `req`: Request object
 - `res`: Response object to write to
@@ -68,19 +84,19 @@ var AuthenticatedEchoHandler = function () {
 			}
 		};
 	}
-,	preHandler = function (jsonReq) {
+,	preHandler = function (jsonReq, next) {
 		if (jsonReq.headers) {
 			Array.isArray(jsonReq.params)
 			? jsonReq.params.unshift(jsonReq.headers)
-			: jsonReq.params.context = jsonReq.headers
+			: jsonReq.params.context = jsonReq.headers;
+			return next();
 		}
+		return next(new Error('User has to be authenticated'));
 	}
 ,	jrpcServer = require('njrpc')
 ,	http = require('http');
 
-jrpcServer.registerModule(new AuthenticatedEchoHandler());
-
-http.createServer(function(req, res) {
-	jrpcServer.handle(req, res, preHandler);	
-}).listen(8080);
+jrpcServer.register(new AuthenticatedEchoHandler());
+jrpcServer.interceptor = preHandler;
+http.createServer(jrpcServer.handle).listen(8080);
 ```
