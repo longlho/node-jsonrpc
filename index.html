@@ -1,0 +1,159 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Node-jsonrpc by longlho</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Node-jsonrpc</h1>
+        <p>JSON-RPC protocol implementation in NodeJS</p>
+        <p class="view"><a href="https://github.com/longlho/node-jsonrpc">View the Project on GitHub <small>longlho/node-jsonrpc</small></a></p>
+        <ul>
+          <li><a href="https://github.com/longlho/node-jsonrpc/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/longlho/node-jsonrpc/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/longlho/node-jsonrpc">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>Overview</h1>
+
+<p><a href="https://secure.travis-ci.org/longlho/node-jsonrpc"><img src="https://secure.travis-ci.org/longlho/node-jsonrpc.png" alt="Build Status"></a></p>
+
+<p>This is a JSON-RPC protocol implementation in NodeJS that follows JSON-RPC 2.0 specs. The good and also bad thing about this library is that it enforces method handler modules to have a certain convention/design pattern. However, it allows the server to automatically extract documentation from the handler (Introspection). This library is still under development.</p>
+
+<h2>Features</h2>
+
+<ul>
+<li>Handles GET/POST requests</li>
+<li>Better error feedback</li>
+<li>Allows method namespacing (Module.method)</li>
+<li>Allows exposure of all methods inside a module</li>
+<li>Authentication can be achieved by giving a preHandle function</li>
+<li>Introspection (currently planning)</li>
+</ul><h2>Installation</h2>
+
+<p>The usual <code>npm install njrpc</code> or if you prefer, you can grab the source/fork it and make changes yourself.</p>
+
+<h2>Usage</h2>
+
+<p>Handlers that can be registered with njrpc should have a name attribute in the instance. A sample handler can be found in handler.js.</p>
+
+<p>The best design pattern to use with this server is the Module design pattern.</p>
+
+<h3>njrpc.errors</h3>
+
+<p>List of errors that JSON-RPC server supports.</p>
+
+<h3>njrpc.modules</h3>
+
+<p>Map of all the RPC module, in the form of <code>modules[className].methodName</code></p>
+
+<h3>njrpc.register(modules)</h3>
+
+<p>Registers an array of modules/a single module, which should have <code>name</code> as the namespace of the module.</p>
+
+<h3>njrpc.interceptor</h3>
+
+<p>Interceptor capable of pre-processing json request before it get
+dispatched to Handler modules.
+This function takes in 2 parameters:</p>
+
+<ul>
+<li>
+<code>jsonRequest</code>: JSON request object</li>
+<li>
+<code>next</code>: Function signaling continuation of the process. Passing an
+<code>Error</code> to this function will force server to return an error response
+instead of moving on.</li>
+</ul><h3>njrpc.paths</h3>
+
+<p>Map of custom URL to handler function. Handler function takes in 2
+arguments: </p>
+
+<ul>
+<li>
+<code>req</code>: Request object</li>
+<li>
+<code>res</code>: Response object to write to</li>
+</ul><h3>njrpc.output(res, [jsonResponse])</h3>
+
+<p>Actually write the JSON response out to the pipe. This can also be overridden to write something else.</p>
+
+<h3>njrpc.handle(req, res, [preHandleFn])</h3>
+
+<p>Handles a request &amp; response, JSON-RPC style. <code>preHandleFn</code> is used to manipulate the JSON request before it gets pushed down to the Handler level. <code>preHandleFn</code> takes a single JSON request object as the argument (after parsing and whitelisting)</p>
+
+<h2>Examples</h2>
+
+<h3>Simple EchoHandler that echoes whatever it receives</h3>
+
+<div class="highlight">
+<pre><span class="kd">var</span> <span class="nx">EchoHandler</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="nx">name</span> <span class="o">:</span> <span class="s1">'EchoHandler'</span><span class="p">,</span>
+            <span class="nx">echo</span> <span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">str</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="nx">str</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">};</span>
+    <span class="p">}</span>
+<span class="p">,</span>   <span class="nx">jrpcServer</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'njrpc'</span><span class="p">)</span>
+<span class="p">,</span>   <span class="nx">http</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'http'</span><span class="p">);</span>
+
+<span class="nx">jrpcServer</span><span class="p">.</span><span class="nx">register</span><span class="p">(</span><span class="k">new</span> <span class="nx">EchoHandler</span><span class="p">());</span>
+<span class="nx">http</span><span class="p">.</span><span class="nx">createServer</span><span class="p">(</span><span class="nx">jrpcServer</span><span class="p">.</span><span class="nx">handle</span><span class="p">).</span><span class="nx">listen</span><span class="p">(</span><span class="mi">8080</span><span class="p">);</span>
+</pre>
+</div>
+
+
+<h3>Authenticated Echo Handler that still echoes, but needs a user &amp; token</h3>
+
+<div class="highlight">
+<pre><span class="kd">var</span> <span class="nx">AuthenticatedEchoHandler</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="nx">name</span> <span class="o">:</span> <span class="s1">'AuthenticatedEchoHandler'</span><span class="p">,</span>
+            <span class="nx">echo</span> <span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">str</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">context</span><span class="p">.</span><span class="nx">user</span> <span class="o">||</span> <span class="o">!</span><span class="nx">context</span><span class="p">.</span><span class="nx">token</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s2">"This call is unauthenticated"</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">return</span> <span class="nx">str</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">};</span>
+    <span class="p">}</span>
+<span class="p">,</span>   <span class="nx">preHandler</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">jsonReq</span><span class="p">,</span> <span class="nx">next</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">jsonReq</span><span class="p">.</span><span class="nx">headers</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nb">Array</span><span class="p">.</span><span class="nx">isArray</span><span class="p">(</span><span class="nx">jsonReq</span><span class="p">.</span><span class="nx">params</span><span class="p">)</span>
+            <span class="o">?</span> <span class="nx">jsonReq</span><span class="p">.</span><span class="nx">params</span><span class="p">.</span><span class="nx">unshift</span><span class="p">(</span><span class="nx">jsonReq</span><span class="p">.</span><span class="nx">headers</span><span class="p">)</span>
+            <span class="o">:</span> <span class="nx">jsonReq</span><span class="p">.</span><span class="nx">params</span><span class="p">.</span><span class="nx">context</span> <span class="o">=</span> <span class="nx">jsonReq</span><span class="p">.</span><span class="nx">headers</span><span class="p">;</span>
+            <span class="k">return</span> <span class="nx">next</span><span class="p">();</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="nx">next</span><span class="p">(</span><span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s1">'User has to be authenticated'</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">,</span>   <span class="nx">jrpcServer</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'njrpc'</span><span class="p">)</span>
+<span class="p">,</span>   <span class="nx">http</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'http'</span><span class="p">);</span>
+
+<span class="nx">jrpcServer</span><span class="p">.</span><span class="nx">register</span><span class="p">(</span><span class="k">new</span> <span class="nx">AuthenticatedEchoHandler</span><span class="p">());</span>
+<span class="nx">jrpcServer</span><span class="p">.</span><span class="nx">interceptor</span> <span class="o">=</span> <span class="nx">preHandler</span><span class="p">;</span>
+<span class="nx">http</span><span class="p">.</span><span class="nx">createServer</span><span class="p">(</span><span class="nx">jrpcServer</span><span class="p">.</span><span class="nx">handle</span><span class="p">).</span><span class="nx">listen</span><span class="p">(</span><span class="mi">8080</span><span class="p">);</span>
+</pre>
+</div>
+
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/longlho">longlho</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
