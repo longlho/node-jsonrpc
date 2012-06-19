@@ -27,11 +27,16 @@ var http = require('http')
   jrpcs.handle(req, res);
 });
 
-
-
-vows.describe('Node-JsonRPC Server').addBatch({
-  'after start' : {
+var BasicTestSuite = function(options) {
+  return {
     topic : function () {
+      //Reset to default options
+      jrpcs.setOptions({
+        encodeUnicodeAsASCII: false,
+        charset: 'none'
+      });
+      //Set new options
+      jrpcs.setOptions(options);
       server.listen(4000, 'localhost', this.callback);
     },
     'when received empty POST request' : {
@@ -376,6 +381,106 @@ vows.describe('Node-JsonRPC Server').addBatch({
     teardown : function () {
       server.close();
     }
-  }
-}).export(module);
+  };
+};
+
+vows.describe('Node-JsonRPC Server').addBatch({
+  'after start (charset=none)' : BasicTestSuite({
+    charset: 'none'
+  }).appendContextCollection({
+    'when received POST request w/ method EchoHandler.echo and unicode param' : {
+      topic : function () {
+        var promise = new(events.EventEmitter),
+        body = Helper.samplePostRequest("EchoHandler.echo", ['unicode \u0422\u0440\u044f\u0431\u0432\u0430'], 2);
+        http.request(Helper.getOptions(), function (res) { promise.emit('success', res); }).end(body);
+        return promise;
+      },
+      'should give back a bad response' : {
+        topic : Helper.parseBadResponse,
+        'that has bad json format' : function (json) {
+          //Bad JSON expected, because of the multibyte diference (content-length is shorter)
+          assert.throws(function () {JSON.parse(json)}, Error, 'Should not be a valid JSON: ' + json);
+        }
+      }
+    }
+  })
+}).addBatch({
+  'after start (charset=none, encodeUnicodeAsASCII=true)' : BasicTestSuite({
+    charset: 'none',
+    encodeUnicodeAsASCII: true
+  }).appendContextCollection({
+    'when received POST request w/ method EchoHandler.echo and unicode param' : {
+      topic : function () {
+        var promise = new(events.EventEmitter),
+        body = Helper.samplePostRequest("EchoHandler.echo", ['unicode \u0422\u0440\u044f\u0431\u0432\u0430'], 2);
+        http.request(Helper.getOptions(), function (res) { promise.emit('success', res); }).end(body);
+        return promise;
+      },
+      'should produce a response' : {
+        topic : Helper.parseResponse,
+        'that has ID matched' : function (json) {
+          assert.equal(2, json.id);
+        },
+        'that has no error' : function (json) {
+          assert.ok(!json.error, "Should not be error " + JSON.stringify(json));
+        },
+        'that has same result as request param' : function (json) {
+          assert.equal(json.result, 'unicode \u0422\u0440\u044f\u0431\u0432\u0430');
+        }
+      }
+    }
+  })
+}).addBatch({
+  'after start (charset=UTF-8)' : BasicTestSuite({
+    charset: 'UTF-8'
+  }).appendContextCollection({
+    'when received POST request w/ method EchoHandler.echo and unicode param' : {
+      topic : function () {
+        var promise = new(events.EventEmitter),
+        body = Helper.samplePostRequest("EchoHandler.echo", ['unicode \u0422\u0440\u044f\u0431\u0432\u0430'], 2);
+        http.request(Helper.getOptions(), function (res) { promise.emit('success', res); }).end(body);
+        return promise;
+      },
+      'should produce a response' : {
+        topic : Helper.parseResponse,
+        'that has ID matched' : function (json) {
+          assert.equal(2, json.id);
+        },
+        'that has no error' : function (json) {
+          assert.ok(!json.error, "Should not be error " + JSON.stringify(json));
+        },
+        'that has same result as request param' : function (json) {
+          assert.equal(json.result, 'unicode \u0422\u0440\u044f\u0431\u0432\u0430');
+        }
+      }
+    }
+  })
+}).addBatch({
+  'after start (charset=UTF-8, encodeUnicodeAsASCII=true)' : BasicTestSuite({
+    charset: 'UTF-8',
+    encodeUnicodeAsASCII: true
+  }).appendContextCollection({
+    'when received POST request w/ method EchoHandler.echo and unicode param' : {
+      topic : function () {
+        var promise = new(events.EventEmitter),
+        body = Helper.samplePostRequest("EchoHandler.echo", ['unicode \u0422\u0440\u044f\u0431\u0432\u0430'], 2);
+        http.request(Helper.getOptions(), function (res) { promise.emit('success', res); }).end(body);
+        return promise;
+      },
+      'should produce a response' : {
+        topic : Helper.parseResponse,
+        'that has ID matched' : function (json) {
+          assert.equal(2, json.id);
+        },
+        'that has no error' : function (json) {
+          assert.ok(!json.error, "Should not be error " + JSON.stringify(json));
+        },
+        'that has same result as request param' : function (json) {
+          assert.equal(json.result, 'unicode \u0422\u0440\u044f\u0431\u0432\u0430');
+        }
+      }
+    }
+  })
+})
+.export(module);
 
