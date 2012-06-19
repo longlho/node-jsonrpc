@@ -1,5 +1,5 @@
 /**
- * Some notes: 
+ * Some notes:
  * interceptor is a request interceptor that can inject extra "hidden" params into
  * request object (for authentication and things of that purpose). It can also reject the request
  * by throwing exception, which will be returned to sender.
@@ -125,6 +125,10 @@
       'Internal Error': -32603
     };
     this.modules = {};
+    this.options = {
+      encodeUnicodeAsASCII: false,
+      charset: 'none'
+    };
     this.paths = {
       '/version': function (req, res) { return _this.output(res, '1.0.3'); }
     };
@@ -148,15 +152,39 @@
     };
 
     /**
+     * Set a collection of options. The options
+     * are being applyed as an extend pattern.
+     * @param Object options The options object
+     */
+    this.setOptions = function (options) {
+      var props = Object.getOwnPropertyNames(options);
+      var dest = this.options;
+      props.forEach(function(name) {
+        if (name in dest) {
+          var destination = Object.getOwnPropertyDescriptor(options, name);
+          Object.defineProperty(dest, name, destination);
+        }
+      });
+    };
+
+    /**
      * Write out a JSON-formatted response.
      * @param Object res NodeJS response object
      * @param Object jsonResponse JSON object to write out
      */
     this.output = function (res, jsonResponse) {
       var result = typeof jsonResponse === 'string' ? jsonResponse : JSON.stringify(jsonResponse);
+      if (true === this.options.encodeUnicodeAsASCII)
+        result = result.replace(/[\u007f-\uffff]/g, function(s) {
+          return '\\u'+('0000'+s.charCodeAt(0).toString(16)).slice(-4);
+        });
+
       res.writeHead(200, {
-        'Content-Type': 'application/json',
-        'Content-Length': result.length
+        'Content-Type': 'application/json' + (this.options.charset !== 'none' ? '; charset=' + this.options.charset : ''),
+        'Content-Length':
+          this.options.encodeUnicodeAsASCII !== true && this.options.charset.toUpperCase() == 'UTF-8' ?
+              Buffer.byteLength(result, 'utf8')
+            : result.length
       });
       res.end(result);
     };
@@ -192,7 +220,7 @@
         try {
           if (typeof jsonRequest.params === 'string') jsonRequest.params = JSON.parse(jsonRequest.params);
         } catch (err) {
-          return _this.output(res, _generateError(null, "Parse Error", err + ". Cannot parse message body: " + jsonString)); 
+          return _this.output(res, _generateError(null, "Parse Error", err + ". Cannot parse message body: " + jsonString));
         }
         return _dispatchInternal(res, jsonRequest);
         default: //Only accept GET & POST methods
