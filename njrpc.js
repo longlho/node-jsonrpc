@@ -153,18 +153,15 @@
 
     /**
      * Set a collection of options. The options
-     * are being applyed as an extend pattern.
+     * are being applied as an extend pattern.
      * @param Object options The options object
      */
     this.setOptions = function (options) {
-      var props = Object.getOwnPropertyNames(options);
-      var dest = this.options;
-      props.forEach(function(name) {
-        if (name in dest) {
-          var destination = Object.getOwnPropertyDescriptor(options, name);
-          Object.defineProperty(dest, name, destination);
+      for (var k in options) {
+        if (k in this.options) {
+          this.options[k] = options[k];
         }
-      });
+      }
     };
 
     /**
@@ -174,17 +171,17 @@
      */
     this.output = function (res, jsonResponse) {
       var result = typeof jsonResponse === 'string' ? jsonResponse : JSON.stringify(jsonResponse);
-      if (true === this.options.encodeUnicodeAsASCII)
-        result = result.replace(/[\u007f-\uffff]/g, function(s) {
-          return '\\u'+('0000'+s.charCodeAt(0).toString(16)).slice(-4);
-        });
+      if (true === this.options.encodeUnicodeAsASCII) {
+        result = new Buffer(result.replace(/[\u007f-\uffff]/g, function (s) {
+          return '\\u' + ('0000' + s.charCodeAt(0).toString(16)).slice(-4);
+        }), 'ascii');
+      } else {
+        result = this.options.charset !== 'none' ? new Buffer(result, this.options.charset) : result;
+      }
 
       res.writeHead(200, {
         'Content-Type': 'application/json' + (this.options.charset !== 'none' ? '; charset=' + this.options.charset : ''),
-        'Content-Length':
-          this.options.encodeUnicodeAsASCII !== true && this.options.charset.toUpperCase() == 'UTF-8' ?
-              Buffer.byteLength(result, 'utf8')
-            : result.length
+        'Content-Length': result.length
       });
       res.end(result);
     };
@@ -205,24 +202,24 @@
         case 'POST':
           //Grab POST request
           var jsonString = '';
-        return req
-        .on('data', function (chunk) { jsonString += chunk; })
-        .on('end', function () {
-          if (!jsonString.length) return _handleInvalidRequest(400, 'Body should not be empty in the request', res);
-          try { var jsonReq = JSON.parse(jsonString); }
-          catch (err) { return _this.output(res, _generateError(null, "Parse Error", err + ". Cannot parse message body: " + jsonString)); }
-          return _dispatchInternal(res, JSON.parse(jsonString), function (err, result) {
-            _this.output(res, err || result);
+          return req
+          .on('data', function (chunk) { jsonString += chunk; })
+          .on('end', function () {
+            if (!jsonString.length) return _handleInvalidRequest(400, 'Body should not be empty in the request', res);
+            try { var jsonReq = JSON.parse(jsonString); }
+            catch (err) { return _this.output(res, _generateError(null, "Parse Error", err + ". Cannot parse message body: " + jsonString)); }
+            return _dispatchInternal(res, JSON.parse(jsonString), function (err, result) {
+              _this.output(res, err || result);
+            });
           });
-        });
         case 'GET':
           var jsonRequest = url.query;
-        try {
-          if (typeof jsonRequest.params === 'string') jsonRequest.params = JSON.parse(jsonRequest.params);
-        } catch (err) {
-          return _this.output(res, _generateError(null, "Parse Error", err + ". Cannot parse message body: " + jsonString));
-        }
-        return _dispatchInternal(res, jsonRequest);
+          try {
+            if (typeof jsonRequest.params === 'string') jsonRequest.params = JSON.parse(jsonRequest.params);
+          } catch (err) {
+            return _this.output(res, _generateError(null, "Parse Error", err + ". Cannot parse message body: " + jsonString));
+          }
+          return _dispatchInternal(res, jsonRequest);
         default: //Only accept GET & POST methods
           return _handleInvalidRequest(400, 'Method can only be GET or POST', res);
       }
