@@ -1,21 +1,24 @@
 {
-  	"author": "Long Ho <holevietlong@gmail.com> (www.azndezign.com)",
-  	"name": "njrpc",
-  	"description": "JSON-RPC v2.0 implementation in NodeJS",
-  	"version": "1.1.0",
-  	"repository": {
-    	"type": "git",
-    	"url": "git://github.com/longlho/node-jsonrpc.git"
-  	},
-  	"main": "njrpc.js",
-  	"engines": {
-		"node": ">= v0.6.0"
-  	},
-  	"dependencies": {},
-  	"devDependencies": {
-		"vows" : "latest"
-	},
-  	"scripts" : {
-  		"test" : "vows test/test.js --spec"
-  	}
-}
+  "author": "Long Ho <holevietlong@gmail.com> (www.azndezign.com)",
+  "contributors": [
+    "Krasen Borisov @kraz"
+  ],
+  "name": "njrpc",
+  "description": "JSON-RPC v2.0 implementation in NodeJS",
+  "version": "1.1.1",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/longlho/node-jsonrpc.git"
+  },
+  "main": "njrpc.js",
+  "engines": {
+    "node": ">= v0.6.0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "vows" : "latest"
+  },
+  "scripts" : {
+    "test" : "vows test/test.js --spec"
+  }
+  }
