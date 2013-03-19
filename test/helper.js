@@ -1,6 +1,7 @@
+/*jslint laxcomma:true*/
 var assert = require('assert')
-, events = require('events')
-, Helper = (function() {
+  , events = require('events')
+  , Helper = (function() {
   return {
     checkBadResponse: function(res) {
       assert.notEqual(200, res.statusCode, "Response should not be 200 " + res.statusCode);
@@ -27,8 +28,8 @@ var assert = require('assert')
       return "?jsonrpc=2.0&method=" + methodName + "&params=" + encodeURIComponent(JSON.stringify(parameters)) + "&id=" + uid;
     },
     parseResponse : function (res) {
-      var promise = new(events.EventEmitter),
-      resString = "";
+      var promise = new events.EventEmitter()
+        , resString = "";
       res.on('data', function(data) { resString += data; });
       res.on('end', function () {
         try {
@@ -46,5 +47,5 @@ var assert = require('assert')
       return src;
     }
   };
-})();
+  })();
 module.exports = Helper;

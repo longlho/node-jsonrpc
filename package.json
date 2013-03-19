@@ -21,4 +21,4 @@
   "scripts" : {
     "test" : "vows test/test.js --spec"
   }
-  }
+}
