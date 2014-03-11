@@ -101,3 +101,7 @@ jrpcServer.register(new AuthenticatedEchoHandler());
 jrpcServer.interceptor = preHandler;
 http.createServer(jrpcServer.handle).listen(8080);
 ```
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/longlho/node-jsonrpc/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
